@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
+from itertools import chain
 
 from src.pdf import fitKDE
 
@@ -9,7 +10,8 @@ def mpPDF(var, q, pts):
     # Marcenko-Pastur pdf
     # q=T/N
     eMin, eMax = var * (1 - (1. / q) ** .5) ** 2, var * (1 + (1. / q) ** .5) ** 2
-    eVal = np.linspace(eMin, eMax, pts)
+    eVal = np.linspace(eMin, eMax, pts).reshape(-1)
+
     pdf = q / (2 * np.pi * var * eVal) * ((eMax - eVal) * (eVal - eMin)) ** .5
     pdf = pd.Series(pdf, index=eVal)
     return pdf
@@ -25,8 +27,7 @@ def errPDFs(var, eVal, q, bWidth, pts=1000):
 
 def findMaxEval(eVal, q, bWidth):
     # Find max random eVal by fitting Marcenko’s dist
-    out = minimize(lambda *x: errPDFs(*x), .5, args=(eVal, q, bWidth),
-                   bounds=((1E-5, 1 - 1E-5),))
+    out = minimize(errPDFs, .5, args=(eVal, q, bWidth), bounds=((1E-5, 1 - 1E-5),))
     if out['success']:
         var = out['x'][0]
     else:
