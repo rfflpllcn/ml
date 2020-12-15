@@ -26,19 +26,20 @@ cov = alpha * cov + (1 - alpha) * getRndCov(nCols, nFact)  # noise+signal
 corr0 = cov2corr(cov)
 eVal0, eVec0 = getPCA(corr0)
 
+# minimize the squared diff between the ML-distribution and the kde, optim param is sigma**2
 eMax0, var0 = findMaxEval(np.diag(eVal0), q, .01)
 nFacts0 = eVal0.shape[0] - np.diag(eVal0)[::-1].searchsorted(eMax0)
 
 print(nFacts0)
-pdf0 = mpPDF(1., q=q, pts=nCols)
-# pdf1 = np.histogram(np.diag(eVal0), bins=100)
-
+pdf0 = mpPDF(var0, q=q, pts=nCols)
 # pdf1 = fitKDE(np.diag(eVal0), bWidth=.01)  # empirical pdf
 
 
 plt.figure()
 plt.plot(list(pdf0.index), pdf0, 'b')
+# plt.plot(list(pdf1.index), pdf1, 'r')
 plt.hist(np.diag(eVal0), density=True, bins=100)
+# plt.legend(['Marcenko-Pastur', 'Empirical:KDE', 'Empirical'])
 plt.legend(['Marcenko-Pastur', 'Empirical'])
 plt.ylabel('prob[\lambda]')
 plt.xlabel('\lambda')
