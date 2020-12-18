@@ -1,8 +1,12 @@
 """
-De-noising covariance matrix
-The main idea behind de-noising the covariance matrix is to eliminate the eigenvalues of the covariance matrix that are representing noise and not useful information.
+De-toning covariance matrix
+By removing the market component, we allow a greater portion of the correlation to be explained by components that
+affect specific subsets of the securities.
+It is similar to removing a loud tone that prevents us from hearing other sounds.
 
-This is done by determining the maximum theoretical value of the eigenvalue of such matrix as a threshold and then setting all the calculated eigenvalues above the threshold to the same value.
+The detoned correlation matrix is singular, as a result of eliminating (at least)
+one eigenvector. This is not a problem for clustering applications, as most
+approaches do not require the invertibility of the correlation matrix.
 
 """
 from os.path import join
@@ -35,20 +39,19 @@ cov_matrix = stock_returns.cov()
 # the De-noised Сovariance matrix
 tn_relation = stock_prices.shape[0] / stock_prices.shape[1]
 kde_bwidth = 0.25
-cov_matrix_denoised = risk_estimators.denoise_covariance(cov_matrix, tn_relation, kde_bwidth)
-cov_matrix_denoised = pd.DataFrame(cov_matrix_denoised, index=cov_matrix.index, columns=cov_matrix.columns)
+
+cov_matrix_detoned = risk_estimators.denoise_covariance(cov_matrix, tn_relation, kde_bwidth, detone=True)
+cov_matrix_detoned = pd.DataFrame(cov_matrix_detoned, index=cov_matrix.index, columns=cov_matrix.columns)
 
 # plot eigenvalues denoised vs simple
-evals_denoised, _ = risk_estimators._get_pca(risk_estimators.cov_to_corr(cov_matrix_denoised))
+evals_detoned, _ = risk_estimators._get_pca(risk_estimators.cov_to_corr(cov_matrix_detoned))
 evals, _ = risk_estimators._get_pca(risk_estimators.cov_to_corr(cov_matrix))
 
 plt.figure()
-plt.plot(range(len(evals)), np.diag(evals), 'g^', range(len(evals)), np.diag(evals_denoised), 'g-')
-plt.title('Eigenvalues, denoised vs simple correlations')
+plt.plot(range(len(evals)), np.diag(evals), 'g^', range(len(evals)), np.diag(evals_detoned), 'g-')
+plt.title('Eigenvalues, detoned vs simple correlations')
 plt.yscale('log')
 plt.ylabel('Eigenvalue (log-scale)')
 plt.xlabel('Eigenvalue number')
-plt.legend(['simple', 'denoised'])
+plt.legend(['simple', 'detoned'])
 plt.show()
-
-
